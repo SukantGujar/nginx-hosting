@@ -4,13 +4,14 @@ Promise = require('bluebird'),
 fs = require('fs'),
 path = require('path'),
 sanitize = require('sanitize-filename'),
+{logger} = require('./logger'),
 {STATUS_OK, STATUS_BUSY} = require("./constants"),
 {localSitesPath, sitesPath, tempPath} = require('./config'),
 {CONTENT_STATUSES} = require('./enums'),
-logPrefix = 'fetchbot.update():',
 {getSites, downloadSiteContentToPath} = require('./sitesserver'),
 {getLocalSites, saveLocalSites} = require('./localsites'),
-extractContents = require('./zip.js');
+extractContents = require('./zip.js'),
+logPrefix = 'fetchbot.update():';
 
 let status = STATUS_OK,
 sites = {},
@@ -104,38 +105,35 @@ updateSites = (changeSet) => {
   )
 },
 update = ()=>{
-  return new Promise(
-    (res, rej) => {
-      let 
-      sourceSites = {},
-      localSites = {},
-      changeSet = {},
-      enabledSites = {};
-      return (
-        // 1. get the source sites.
-        getSites()
-        .then(sites => sourceSites = sites)
-        // 2. get the local sites.
-        .then(getLocalSites)
-        .then(sites => localSites = sites)
-        // 3. Build changeset by comparing source and local site versions.
-        .then(()=>changeSet = compareSourceWithLocalSitesAndBuildChangeset(sourceSites, localSites))
-        // 4. Persist the changeSet
-        .then(() => updateSites(changeSet))
-        // 5. Find enabled sites to prep for processing their contents.
-        .then(()=>enabledSites = _.filter(changeSet, site => site.enabled))
-        // 5. Verify already existing zips and find which ones are missing and should be downloaded again.
-        .then(()=>verifyAndUpdateDownloadedContentAvailabilityForEnabledSites(enabledSites))
-        // 6. Download content of the enabled sites which are not yet downloaded. 
-        .then(()=>downloadEnabledSitesContent(enabledSites))
-        // 7. Persist the changeSet
-        .then(() => updateSites(changeSet))
-        // 8. Extract contents into site paths
-        .then(() => extractSitesContent(enabledSites))
-        // 9. Persist the changeSet
-        .then(() => updateSites(changeSet))
-      );
-    }
+  let 
+  sourceSites = {},
+  localSites = {},
+  changeSet = {},
+  enabledSites = {};
+  
+  return (
+    // 1. get the source sites.
+    getSites()
+    .then(sites => sourceSites = sites)
+    // 2. get the local sites.
+    .then(getLocalSites)
+    .then(sites => localSites = sites)
+    // 3. Build changeset by comparing source and local site versions.
+    .then(()=>changeSet = compareSourceWithLocalSitesAndBuildChangeset(sourceSites, localSites))
+    // 4. Persist the changeSet
+    .then(() => updateSites(changeSet))
+    // 5. Find enabled sites to prep for processing their contents.
+    .then(()=>enabledSites = _.filter(changeSet, site => site.enabled))
+    // 5. Verify already existing zips and find which ones are missing and should be downloaded again.
+    .then(()=>verifyAndUpdateDownloadedContentAvailabilityForEnabledSites(enabledSites))
+    // 6. Download content of the enabled sites which are not yet downloaded. 
+    .then(()=>downloadEnabledSitesContent(enabledSites))
+    // 7. Persist the changeSet
+    .then(() => updateSites(changeSet))
+    // 8. Extract contents into site paths
+    .then(() => extractSitesContent(enabledSites))
+    // 9. Persist the changeSet
+    .then(() => updateSites(changeSet))
   );
 },
 getStatus = () => status,
@@ -143,11 +141,14 @@ enqueueUpdate = () => {
   if (status != STATUS_OK){
     return status;
   }
-
+  logger.log(`${logPrefix} Enqueuing update.`);
   status = STATUS_BUSY;
-  update().then(()=>status = STATUS_OK);
+  update().then(()=>{
+    logger.log(`${logPrefix} Finished update.`);  
+    status = STATUS_OK;
+  });
 
-  return status;
+  return STATUS_OK;
 };
 
 // schedule an update on start.
