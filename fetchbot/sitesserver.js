@@ -60,8 +60,12 @@ const getDb = function(){
 module.exports = {
   getSites : function(){
     // TODO: Add real logic.
-    logger.warn(`sitesserver.getSites: mocked sites \n${JSON.stringify(mockSites, null, 2)}.`);
-    return Promise.resolve(mockSites);
+    return new Promise((res)=>{
+      setTimeout(()=>{
+        logger.warn(`sitesserver.getSites: mocked sites \n${JSON.stringify(mockSites, null, 2)}.`);
+        res(mockSites);
+      }, 6000);
+    });
   },
 
   downloadSiteContentToPath : function(siteId, filePath){
