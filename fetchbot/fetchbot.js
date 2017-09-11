@@ -161,6 +161,7 @@ update = ()=>{
     .then(() => updateSites(changeSet))
     .then(() => {
       const end = new Date();
+      logger.debug(`${logPrefix} Update was started at ${start.toUTCString()}.`);      
       logger.debug(`${logPrefix} Update finished at ${end.toUTCString()}.`);
       logger.debug(`${logPrefix} Total time (ms): ${end - start}.`);      
     })
