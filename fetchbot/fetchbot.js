@@ -146,6 +146,12 @@ enqueueUpdate = () => {
   update().then(()=>{
     logger.log(`${logPrefix} Finished update.`);  
     status = STATUS_OK;
+  })
+  .catch(err => {
+    logger.error(`${logPrefix} Error occurred during update.`);
+    logger.error(err);
+
+    status = STATUS_OK;    
   });
 
   return STATUS_OK;
