@@ -15,8 +15,8 @@ getLocalSites = () => {
     (res, rej) => {
       jsonfile.readFile(localSitesPath, (err, data)=>{
         return (
-          (err && err.code != 'ENOENT' && rej(error(`error reading sites from disk.`, err)))
-              || res(log(`read sites from disk.`, data || {}))
+          (err && err.code != 'ENOENT' && rej(error(`getLocalSites: Error reading sites from disk.`, err)))
+              || res(log(`getLocalSites: Read sites from disk.`, data || {}))
         );
       })
     }
@@ -27,8 +27,8 @@ saveLocalSites = (sites) => {
     (res, rej) => {
       jsonfile.writeFile(localSitesPath, sites, {spaces: 2}, (err)=>{
         return (
-          (err && rej(error(`error writing sites to disk.`, err)))
-              || res(log(`wrote sites to disk.`, sites))
+          (err && rej(error(`saveLocalSites: Error writing sites to disk.`, err)))
+              || res(log(`saveLocalSites: Wrote sites to disk.`, sites))
         );
       })
     }

@@ -35,6 +35,7 @@ const mockSites = {
     "name" : "app3",
     "path" : "app3",
     "order" : "2",
+    "version": 3,
     "enabled" : false,
     "routes" : {
       "*" : "index.html"
@@ -61,6 +62,7 @@ module.exports = {
   getSites : function(){
     // TODO: Add real logic.
     return new Promise((res)=>{
+      logger.debug(`sitesserver.getSites: Fetching source sites.`);
       setTimeout(()=>{
         logger.warn(`sitesserver.getSites: mocked sites \n${JSON.stringify(mockSites, null, 2)}.`);
         res(mockSites);

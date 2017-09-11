@@ -15,7 +15,7 @@ logPrefix = 'fetchbot.update():';
 
 let status = STATUS_OK,
 sites = {},
-newSite = ()=>({"version" : 1, "content" : CONTENT_STATUSES.NOT_DOWNLOADED}),
+newSite = ()=>({"version" : 0, "content" : CONTENT_STATUSES.NOT_DOWNLOADED}),
 copyProps = (source, dest, props) => {
   _.forEach(props, (prop)=>{
     dest[prop] = source[prop];
@@ -25,12 +25,17 @@ copyProps = (source, dest, props) => {
 },
 setLocalSiteVersionAndContentStatusBasedOnSourceSiteVersion = (sourceSite, localSite) => {
   const {version:localSiteVersion} = localSite,
-  {version:sourceSiteVersion} = sourceSite;
+  {version:sourceSiteVersion, name: sourceSiteName, enabled} = sourceSite;
 
   if (_.toNumber(sourceSiteVersion) != _.toNumber(localSiteVersion)){
     localSite["version"] = sourceSite["version"];
     // local site needs to download new content now.
     localSite["content"] = CONTENT_STATUSES.NOT_DOWNLOADED;
+
+    logger.debug(`${logPrefix} Site "${sourceSiteName}" marked for download due to version difference ${sourceSiteVersion}/${localSiteVersion}.`);
+    if (!enabled){
+      logger.debug(`${logPrefix} Site "${sourceSiteName}" is not enabled and will not be downloaded in this update.`);
+    }
   }
 
   return localSite;
@@ -53,10 +58,12 @@ compareSourceWithLocalSitesAndBuildChangeset = (sourceSites, localSites) => {
 verifyAndUpdateDownloadedContentAvailabilityForEnabledSites = (enabledSites) => {
   const enabledSitesWithDownloadedContent = _.filter(enabledSites, site => sites.content == CONTENT_STATUSES.DOWNLOADED);
   _.forEach(enabledSitesWithDownloadedContent, site => {
-    const {zipPath} = site;
+    const {zipPath, name} = site;
     if (!fs.existsSync(zipPath)){
       delete site["zipPath"];
       site["content"] = CONTENT_STATUSES.NOT_DOWNLOADED;
+
+      logger.debug(`${logPrefix} Site "${name}" marked for download due to missing local zip at "${zipPath}".`);
     }
   });
 
@@ -64,12 +71,17 @@ verifyAndUpdateDownloadedContentAvailabilityForEnabledSites = (enabledSites) => 
 },
 downloadSiteContent = (site) => {
   let
-  {id} = site, 
-  zipPath = path.join(tempPath, `${sanitize(id)}.zip`);
+  {id, version, name} = site, 
+  zipPath = path.join(tempPath, `${sanitize(id)}.${sanitize(version)}.zip`);
   site["zipPath"] = zipPath;
+
+  logger.debug(`${logPrefix} Site "${name}" download started, target location is "${zipPath}".`);
+  
   return (
     downloadSiteContentToPath(id, zipPath)
     .then(()=>{
+      logger.debug(`${logPrefix} Site "${name}" downloaded to "${zipPath}".`);
+  
       site["content"] = CONTENT_STATUSES.DOWNLOADED;
       return site;
     })
@@ -85,10 +97,15 @@ downloadEnabledSitesContent = (enabledSites) => {
 extractSitesContent = (enabledSites) => {
   const sitesPendingExtraction = _.filter(enabledSites, site => site.content == CONTENT_STATUSES.DOWNLOADED),
   promises = _.map(sitesPendingExtraction, site => {
-    const {path: sitePath, zipPath} = site,
+    const {path: sitePath, zipPath, name} = site,
     extractPath = path.join(sitesPath, sitePath);
+
+    logger.debug(`${logPrefix} Site "${name}" extraction started at "${extractPath}".`);  
+
     return extractContents(zipPath, extractPath)
     .then(()=>{
+      logger.debug(`${logPrefix} Site "${name}" extracted at "${extractPath}".`);  
+    
       site["content"] = CONTENT_STATUSES.EXTRACTED;
       return site;
     });
@@ -99,6 +116,8 @@ extractSitesContent = (enabledSites) => {
   );
 },
 updateSites = (changeSet) => {
+  logger.debug(`${logPrefix} Writing sites to disk.`);
+  
   return (
     saveLocalSites(changeSet)
     .then(()=> sites = changeSet)
@@ -109,7 +128,10 @@ update = ()=>{
   sourceSites = {},
   localSites = {},
   changeSet = {},
-  enabledSites = {};
+  enabledSites = {},
+  start = new Date();
+
+  logger.debug(`${logPrefix} Update started at ${start.toUTCString()}.`);
   
   return (
     // 1. get the source sites.
@@ -134,6 +156,11 @@ update = ()=>{
     .then(() => extractSitesContent(enabledSites))
     // 9. Persist the changeSet
     .then(() => updateSites(changeSet))
+    .then(() => {
+      const end = new Date();
+      logger.debug(`${logPrefix} Update finished at ${end.toUTCString()}.`);
+      logger.debug(`${logPrefix} Total time (ms): ${end - start}.`);      
+    })
   );
 },
 getStatus = () => status,
@@ -141,10 +168,9 @@ enqueueUpdate = () => {
   if (status != STATUS_OK){
     return status;
   }
-  logger.log(`${logPrefix} Enqueuing update.`);
+  logger.debug(`${logPrefix} Enqueuing update.`);
   status = STATUS_BUSY;
   update().then(()=>{
-    logger.log(`${logPrefix} Finished update.`);  
     status = STATUS_OK;
   })
   .catch(err => {
