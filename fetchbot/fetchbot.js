@@ -108,6 +108,9 @@ extractSitesContent = (enabledSites) => {
     
       site["content"] = CONTENT_STATUSES.EXTRACTED;
       return site;
+    })
+    .catch((err)=>{
+      logger.error(`${logPrefix} Site "${name}" extraction failed from "${zipPath}" to "${extractPath}".`);
     });
   });
 
