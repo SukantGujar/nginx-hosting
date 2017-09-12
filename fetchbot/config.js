@@ -17,6 +17,8 @@ if (!mongodb){
   throw new Error(`${enums.MONGO_DB} argument is not specified.`);
 }
 
+logger.info(`NODE_ENV is ${process.env.NODE_ENV}.`);
+
 logger.info(`${enums.MONGO_DB} is "${mongodb}".`);
 logger.info(`${enums.NGINX_PID_PATH} is "${nginxPidPath}".`);
 logger.info(`${enums.LOCAL_SITES_PATH} is "${localSitesPath}".`);
