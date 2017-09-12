@@ -9,6 +9,8 @@ RUN yarn install --production
 
 EXPOSE 80
 
+ENV NODE_ENV production
+
 ENV SITES /var/www/sites/
 
 ENV DB_URL mongodb://server1
@@ -22,7 +24,12 @@ COPY ./fetchbot /fetchbot/
 # TODO: Remove this before release
 COPY ./playground/tmp/ /var/tmp/
 
-# Disable default.conf
-RUN mv /etc/nginx/conf.d/default.conf /etc/nginx/conf.d/default.conf.off
+COPY run.sh run.sh
 
-CMD ["nginx-debug", "-g", "daemon off;"]
+# Disable default.conf
+RUN mv /etc/nginx/conf.d/default.conf /etc/nginx/conf.d/default.conf.off \
+  && chmod +x run.sh
+
+#CMD ["nginx", "-g", "daemon off;"]
+
+CMD ["./run.sh"]
