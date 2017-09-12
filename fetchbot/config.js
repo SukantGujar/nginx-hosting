@@ -4,6 +4,7 @@ env = process.env,
 enums = require("./enums"),
 constants = require("./constants"),
 mongodb = argv[enums.MONGO_DB] || env[enums.MONGO_DB],
+nginxPidPath = argv[enums.NGINX_PID_PATH] || env[enums.NGINX_PID_PATH] || constants.DEFAULT_NGINX_PID_PATH,
 localSitesPath = argv[enums.LOCAL_SITES_PATH] || env[enums.LOCAL_SITES_PATH] || constants.DEFAULT_LOCAL_SITES_PATH,
 sitesPath = argv[enums.SITES_PATH] || env[enums.SITES_PATH] || constants.DEFAULT_SITES_PATH,
 sitesConf = argv[enums.SITES_CONF] || env[enums.SITES_CONF] || constants.DEFAULT_SITES_CONF,
@@ -17,6 +18,7 @@ if (!mongodb){
 }
 
 logger.info(`${enums.MONGO_DB} is "${mongodb}".`);
+logger.info(`${enums.NGINX_PID_PATH} is "${nginxPidPath}".`);
 logger.info(`${enums.LOCAL_SITES_PATH} is "${localSitesPath}".`);
 logger.info(`${enums.SITES_PATH} is "${sitesPath}".`);
 logger.info(`${enums.SITES_CONF} is "${sitesConf}".`);
@@ -27,6 +29,7 @@ logger.info(`${enums.FETCHBOT_PORT} is "${port}".`);
 
 module.exports = {
   mongodb,
+  nginxPidPath,
   localSitesPath,
   sitesPath,
   sitesConf,

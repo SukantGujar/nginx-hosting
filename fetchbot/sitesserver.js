@@ -66,7 +66,7 @@ module.exports = {
       setTimeout(()=>{
         logger.warn(`sitesserver.getSites: mocked sites \n${JSON.stringify(mockSites, null, 2)}.`);
         res(mockSites);
-      }, 6000);
+      }, 0);
     });
   },
 

@@ -2,7 +2,7 @@
   "name": "nginx-hosting",
   "version": "0.1.0",
   "main": "fetchbot/index.js",
-  "scripts" : {
+  "scripts": {
     "start": "node fetchbot/index.js"
   },
   "author": "Sukant Gujar",
@@ -12,10 +12,12 @@
     "bluebird": "^3.5.0",
     "express": "^4.15.4",
     "express-healthcheck": "^0.1.0",
+    "handlebars": "^4.0.10",
     "jsonfile": "^3.0.1",
     "lodash": "^4.17.4",
     "minimist": "^1.2.0",
     "mongodb": "^2.2.31",
+    "nginx-reload": "^0.0.7",
     "rimraf": "^2.6.1",
     "sanitize-filename": "^1.6.1"
   }

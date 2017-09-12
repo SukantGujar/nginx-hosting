@@ -11,6 +11,7 @@
       "program": "${workspaceRoot}\\fetchbot\\index.js",
       "env": {
         "DB_URL" : "mongodb://server1",
+        "NGINX_PID_PATH" : "${workspaceRoot}\\playground\\nginx.pid",
         "LOCAL_SITES_PATH" : "${workspaceRoot}\\playground\\sites.json",
         "SITES_PATH" : "${workspaceRoot}\\playground\\sites",
         "SITES_CONF_PATH" : "${workspaceRoot}\\playground\\nginx\\conf.d",

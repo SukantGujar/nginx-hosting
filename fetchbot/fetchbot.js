@@ -4,14 +4,17 @@ Promise = require('bluebird'),
 fs = require('fs'),
 path = require('path'),
 sanitize = require('sanitize-filename'),
+NginxReloader = require('nginx-reload'),
 {logger} = require('./logger'),
 {STATUS_OK, STATUS_BUSY} = require("./constants"),
-{localSitesPath, sitesPath, tempPath} = require('./config'),
+{localSitesPath, sitesPath, tempPath, nginxPidPath} = require('./config'),
 {CONTENT_STATUSES} = require('./enums'),
 {getSites, downloadSiteContentToPath} = require('./sitesserver'),
 {getLocalSites, saveLocalSites} = require('./localsites'),
 extractContents = require('./zip.js'),
-logPrefix = 'fetchbot.update():';
+generateAndPersistSitesConf = require('./sitesconf'),
+logPrefix = 'fetchbot.update():',
+nginxReloader = NginxReloader(nginxPidPath);
 
 let status = STATUS_OK,
 sites = {},
@@ -126,6 +129,41 @@ updateSites = (changeSet) => {
     .then(()=> sites = changeSet)
   )
 },
+updateSitesConf = (changeSet) => {
+  logger.debug(`${logPrefix} Building sites conf.`);
+  return (
+    generateAndPersistSitesConf(changeSet)
+    .catch(err => {
+      return false;
+    })
+  );
+},
+reloadNginx = (reload = false) => {
+  if (!reload){
+    logger.debug(`${logPrefix} Reloading Nginx.`);  
+  
+    return false;
+  }
+
+  logger.debug(`${logPrefix} Reloading Nginx.`);  
+
+  return new Promise(
+    (res, rej) => {
+      nginxReloader.reload(err => {
+        if (err){
+          logger.error(`${logPrefix} Error occurred while reloading nginx.`);
+          logger.error(err);
+
+          return res(false);
+        }
+
+        logger.debug(`${logPrefix} Nginx reloaded.`);
+
+        return res(true);
+      });
+    }
+  );
+},
 update = ()=>{
   let 
   sourceSites = {},
@@ -144,21 +182,25 @@ update = ()=>{
     .then(getLocalSites)
     .then(sites => localSites = sites)
     // 3. Build changeset by comparing source and local site versions.
-    .then(()=>changeSet = compareSourceWithLocalSitesAndBuildChangeset(sourceSites, localSites))
+    .then(() => changeSet = compareSourceWithLocalSitesAndBuildChangeset(sourceSites, localSites))
     // 4. Persist the changeSet
     .then(() => updateSites(changeSet))
     // 5. Find enabled sites to prep for processing their contents.
-    .then(()=>enabledSites = _.filter(changeSet, site => site.enabled))
+    .then(() => enabledSites = _.filter(changeSet, site => site.enabled))
     // 5. Verify already existing zips and find which ones are missing and should be downloaded again.
-    .then(()=>verifyAndUpdateDownloadedContentAvailabilityForEnabledSites(enabledSites))
+    .then(() => verifyAndUpdateDownloadedContentAvailabilityForEnabledSites(enabledSites))
     // 6. Download content of the enabled sites which are not yet downloaded. 
-    .then(()=>downloadEnabledSitesContent(enabledSites))
+    .then(() => downloadEnabledSitesContent(enabledSites))
     // 7. Persist the changeSet
     .then(() => updateSites(changeSet))
     // 8. Extract contents into site paths
     .then(() => extractSitesContent(enabledSites))
     // 9. Persist the changeSet
     .then(() => updateSites(changeSet))
+    // 10. Build sites conf
+    .then(() => updateSitesConf(changeSet))
+    // 11. Reload nginx
+    .then(reloadNginx)
     .then(() => {
       const end = new Date();
       logger.debug(`${logPrefix} Update was started at ${start.toUTCString()}.`);      

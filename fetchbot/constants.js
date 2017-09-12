@@ -1,4 +1,5 @@
 module.exports = {
+  "DEFAULT_NGINX_PID_PATH" : "/var/run/nginx.pid",
   "DEFAULT_SITES_PATH" : "/var/www/sites",
   "DEFAULT_SITES_CONF" : "sites.conf",
   "DEFAULT_SITES_CONF_PATH" : "/var/nginx/conf.d",

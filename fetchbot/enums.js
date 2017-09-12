@@ -1,5 +1,6 @@
 module.exports = {
   "MONGO_DB" : "DB_URL",
+  "NGINX_PID_PATH" : "NGINX_PID_PATH",
   "LOCAL_SITES_PATH" : "LOCAL_SITES_PATH",
   "SITES_PATH" : "SITES_PATH",
   "SITES_CONF" : "SITES_CONF",
