@@ -23,7 +23,7 @@ server {
     alias /var/www/sites/{{path}}/;
     
     # Index
-    Index {{routeIndex routes}};
+    index {{routeIndex routes}};
     {{#nonIndexRoutes routes}}
       {{#with this}}
     

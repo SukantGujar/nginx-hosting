@@ -2,7 +2,7 @@ module.exports = {
   "DEFAULT_NGINX_PID_PATH" : "/var/run/nginx.pid",
   "DEFAULT_SITES_PATH" : "/var/www/sites",
   "DEFAULT_SITES_CONF" : "sites.conf",
-  "DEFAULT_SITES_CONF_PATH" : "/var/nginx/conf.d",
+  "DEFAULT_SITES_CONF_PATH" : "/etc/nginx/conf.d",
   "DEFAULT_TEMP_PATH" : "/var/tmp",
   "EXTRACT_SITE_NAME_TEMPLATE" : "%path%_next",
   "DEFAULT_LOCAL_SITES_PATH" : "/fetchbot/sites.json",

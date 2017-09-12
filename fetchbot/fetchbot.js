@@ -4,17 +4,16 @@ Promise = require('bluebird'),
 fs = require('fs'),
 path = require('path'),
 sanitize = require('sanitize-filename'),
-NginxReloader = require('nginx-reload'),
 {logger} = require('./logger'),
 {STATUS_OK, STATUS_BUSY} = require("./constants"),
-{localSitesPath, sitesPath, tempPath, nginxPidPath} = require('./config'),
+{localSitesPath, sitesPath, tempPath} = require('./config'),
 {CONTENT_STATUSES} = require('./enums'),
 {getSites, downloadSiteContentToPath} = require('./sitesserver'),
 {getLocalSites, saveLocalSites} = require('./localsites'),
 extractContents = require('./zip.js'),
 generateAndPersistSitesConf = require('./sitesconf'),
 logPrefix = 'fetchbot.update():',
-nginxReloader = NginxReloader(nginxPidPath);
+nginxReloader = require('./nginxreloader');
 
 let status = STATUS_OK,
 sites = {},
@@ -147,22 +146,7 @@ reloadNginx = (reload = false) => {
 
   logger.debug(`${logPrefix} Reloading Nginx.`);  
 
-  return new Promise(
-    (res, rej) => {
-      nginxReloader.reload(err => {
-        if (err){
-          logger.error(`${logPrefix} Error occurred while reloading nginx.`);
-          logger.error(err);
-
-          return res(false);
-        }
-
-        logger.debug(`${logPrefix} Nginx reloaded.`);
-
-        return res(true);
-      });
-    }
-  );
+  return nginxReloader();
 },
 update = ()=>{
   let 
