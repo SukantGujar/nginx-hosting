@@ -167,6 +167,12 @@ update = ()=>{
     .then(sites => localSites = sites)
     // 3. Build changeset by comparing source and local site versions.
     .then(() => changeSet = compareSourceWithLocalSitesAndBuildChangeset(sourceSites, localSites))
+    // 3.1. If the changeset is the same as sites, skip update.
+    .then(()=>{
+      if (_.isEqual(sites, changeSet)){
+        throw "NO_CHANGE";
+      }
+    })
     // 4. Persist the changeSet
     .then(() => updateSites(changeSet))
     // 5. Find enabled sites to prep for processing their contents.
@@ -185,6 +191,16 @@ update = ()=>{
     .then(() => updateSitesConf(changeSet))
     // 11. Reload nginx
     .then(reloadNginx)
+    .catch(err => {
+      if (err === "NO_CHANGE"){
+        logger.debug(`${logPrefix} No changes detected, skipping update.`);
+
+        return;
+      }
+
+      logger.error(`${logPrefix} Error occurred during update.`);
+      logger.error(err);
+    })
     .then(() => {
       const end = new Date();
       logger.debug(`${logPrefix} Update was started at ${start.toUTCString()}.`);      
